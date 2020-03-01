@@ -1,4 +1,6 @@
 import { Game } from "./game.js";
+import { GameJsonSerializer } from "./game-json-serializer.js";
+import { GameJsonDeserializer } from "./game-json-deserializer.js";
 
 let game = undefined;
 
@@ -18,10 +20,10 @@ function updateUi(boardHolder, gameName, clickTargets) {
         clickTargets.classList.remove("black");
     }
 
-    for (let i = 0; i <= 5; i++) {
-        for (let j = 0; j <= 6; j++) {
-            let squares = document.getElementById(`square-${i}-${j}`);
-            let result = game.getTokenAt(i, j);
+    for (let rowIndex = 0; rowIndex <= 5; rowIndex++) {
+        for (let columnIndex = 0; columnIndex <= 6; columnIndex++) {
+            let squares = document.getElementById(`square-${rowIndex}-${columnIndex}`);
+            let result = game.getTokenAt(rowIndex, columnIndex);
             squares.innerHTML = "";
             if (result === 1) {
                 const div = document.createElement("div");
@@ -37,9 +39,9 @@ function updateUi(boardHolder, gameName, clickTargets) {
         }
     }
 
-    for(let i = 0; i <= 6; i++){
-        const column = document.getElementById(`column-${i}`);
-        if (game.isColumnFull(i)){
+    for(let columnIndex = 0; columnIndex <= 6; columnIndex++){
+        const column = document.getElementById(`column-${columnIndex}`);
+        if (game.isColumnFull(columnIndex)){
             column.classList.add("full");
         } else {
             column.classList.remove("full");
@@ -73,12 +75,17 @@ window.addEventListener("DOMContentLoaded", (e) => {
     });
 
     clickTargets.addEventListener("click", (e)=>{
-        if (e.target.id.includes("column-")) {
-            let targetIdNum = e.target.id[e.target.id.length - 1];
-            let targetNum = Number.parseInt(targetIdNum);
-            game.playInColumn(targetNum);
+        if (!e.target.classList.contains("full")) {
+            if (e.target.id.includes("column-")) {
+                let targetIdNum = e.target.id[e.target.id.length - 1];
+                let targetNum = Number.parseInt(targetIdNum);
+                game.playInColumn(targetNum);
+            }
+            updateUi(boardHolder, gameName, clickTargets);
+            new GameJsonSerializer(game).serialize();
         }
-        updateUi(boardHolder, gameName, clickTargets);
     });
-
+    let storage = localStorage.getItem("connect-four-state");
+    game = new GameJsonDeserializer(storage).deserialize();
+    updateUi(boardHolder, gameName, clickTargets);
 });
